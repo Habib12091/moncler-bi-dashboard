@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Moncler BI Dashboard – Habib Goloba</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Chart.js from CDN (allowed by brief). All data is embedded below. -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --bg: #050608;
+      --card: #101218;
+      --accent: #b38f5a;
+      --accent-soft: rgba(179,143,90,0.2);
+      --text: #f5f5f7;
+      --muted: #9ea3b4;
+      --danger: #e05a5a;
+      --success: #4bbf81;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      background: radial-gradient(circle at top, #1b1f2b 0, #050608 50%);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    header {
+      border-bottom: 1px solid #202434;
+      padding: 1.2rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      backdrop-filter: blur(14px);
+      background: rgba(5, 6, 8, 0.86);
+      z-index: 20;
+    }
+
+    header h1 {
+      font-size: 1.1rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    header span.badge {
+      border-radius: 999px;
+      border: 1px solid var(--accent-soft);
+      padding: 0.15rem 0.75rem;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    main {
+      max-width: 1120px;
+      margin: 1.5rem auto 3rem;
+      padding: 0 1rem 3rem;
+    }
+
+    h2 {
+      font-size: 1.4rem;
+      margin-bottom: 0.4rem;
+    }
+
+    h3 {
+      font-size: 1.05rem;
+      margin-bottom: 0.3rem;
+    }
+
+    p {
+      margin-bottom: 0.5rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .section {
+      margin-bottom: 2rem;
+    }
+
+    .grid {
+      display: grid;
+      gap: 1rem;
+    }
+
+    @media (min-width: 768px) {
+      .grid-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .grid-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    .card {
+      background: radial-gradient(circle at top left, #181b25 0, #050608 55%);
+      border-radius: 1rem;
+      padding: 1rem 1.1rem;
+      border: 1px solid #1d212f;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+    }
+
+    .card-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 0.25rem;
+    }
+
+    .card small {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .kpi-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+
+    .kpi {
+      flex: 1 1 150px;
+      background: rgba(12, 15, 24, 0.95);
+      border-radius: 0.8rem;
+      padding: 0.6rem 0.75rem;
+      border: 1px solid #222636;
+    }
+
+    .kpi-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+    }
+
+    .kpi-value {
+      margin-top: 0.15rem;
+      font-size: 1.05rem;
+    }
+
+    .kpi-tag {
+      font-size: 0.75rem;
+      margin-top: 0.1rem;
+    }
+
+    .kpi-tag.positive {
+      color: var(--success);
+    }
+
+    .kpi-tag.negative {
+      color: var(--danger);
+    }
+
+    ul {
+      margin-left: 1.1rem;
+      margin-top: 0.2rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
+      font-size: 0.85rem;
+      background: #151826;
+      padding: 0.1rem 0.3rem;
+      border-radius: 0.3rem;
+    }
+
+    .tagline {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #1a1e2c;
+      margin-top: 2rem;
+    }
+
+    /* Image strip in executive card */
+    .hero-row {
+      margin: 0.75rem 0 0.2rem;
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .hero-img {
+      flex: 1 1 260px;
+      max-height: 140px;
+      object-fit: cover;
+      border-radius: 0.9rem;
+      border: 1px solid #1d212f;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Region filter controls */
+    .filter-row {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin: 0.5rem 0 0.35rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-row label {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .filter-row select {
+      background: #050608;
+      color: var(--text);
+      border-radius: 999px;
+      border: 1px solid #2a3040;
+      padding: 0.2rem 0.7rem;
+      font-size: 0.8rem;
+      outline: none;
+    }
+
+    #regionInsight {
+      font-size: 0.82rem;
+      margin-bottom: 0.2rem;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>MONCLER GROUP – DATA STORY</h1>
+  <span class="badge">Habib Goloba · Business Intelligence Final Project</span>
+</header>
+
+<main>
+  <!-- Executive summary / problem -->
+  <section class="section card">
+    <div class="card-title-row">
+      <h2>Executive Dashboard & Business Question</h2>
+      <small>Company: Moncler Group · Focus: Q1 2025, H1 2022-2024, 9M 2025</small>
+    </div>
+    <p>
+      <strong>Business question:</strong> How should Moncler accelerate
+      long-term, high-margin growth by optimising the balance between
+      <em>DTC vs wholesale</em> and <em>regional expansion</em> (Asia, EMEA,
+      Americas)?
+    </p>
+    <p>
+      This project implements <strong>Option C – Financial Performance &amp; Trends</strong>
+      from the module brief. It analyses Moncler Group’s revenue growth,
+      channel mix and regional performance using publicly available financial
+      data, with a particular focus on the DTC-driven luxury outerwear
+      franchise.
+    </p>
+    <p>
+      The dashboard below uses revenue and store network data from Moncler
+      Group’s Q1 2025 interim management statement, half-year 2022–2024
+      report, and 9M 2025 interim statement. All data has been extracted
+      into CSV files and processed in Python, then embedded directly in this
+      one-page BI site.
+    </p>
+
+    <h3>Key financial findings (Option C – Performance & Trends)</h3>
+  <ul>
+    <li><strong>Growth has normalised:</strong> After a strong 2022–2024, Q1 2025 shows low single-digit revenue growth, signalling resilience but a cooler demand environment.</li>
+    <li><strong>DTC now dominates:</strong> Around 87% of Moncler Q1 2025 revenue comes from Direct-to-Consumer, with wholesale being deliberately reduced.</li>
+    <li><strong>Asia is the growth engine:</strong> Asia now represents just over half of Moncler brand revenue, while EMEA is softer and the Americas are smaller but stabilising.</li>
+    <li><strong>Store expansion is selective:</strong> Moncler and Stone Island mono-brand stores are concentrated in Asia and key tourist hubs, supporting a premium, DTC-led model.</li>
+    <li><strong>Digital funnel has upside:</strong> Scenario analysis shows that small improvements in product-view and checkout conversion can create meaningful incremental revenue without large store growth.</li>
+  </ul>
+  
+
+    <!-- Visual brand image (local file in your repo) -->
+    <div class="hero-row">
+      <!-- keep moncler-740x400-2.png in the same folder as this HTML -->
+      <img src="moncler-740x400-2.png"
+           alt="Moncler outerwear visual"
+           class="hero-img" />
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-label">Q1 2025 Group Revenue</div>
+        <div class="kpi-value">€829m</div>
+        <div class="kpi-tag positive">+1% vs Q1 2024 (CFX)</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Q1 2025 Moncler Brand</div>
+        <div class="kpi-value">€721.8m</div>
+        <div class="kpi-tag positive">+2% YoY (CFX)</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Q1 2025 DTC Share (Moncler)</div>
+        <div class="kpi-value">87%</div>
+        <div class="kpi-tag positive">DTC +4% YoY · Wholesale -5%</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Monobrand Stores (Mar-25)</div>
+        <div class="kpi-value">Moncler 294 · SI 92</div>
+        <div class="kpi-tag">Selective, Asia-led expansion</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAIN DASHBOARD GRID: 4 charts -->
+  <section class="section">
+    <div class="grid grid-2">
+      <!-- Chart 1: Half-year revenue trend -->
+      <div class="card">
+        <div class="card-title-row">
+          <h3>1. Half-year revenue trend 2022-2024</h3>
+          <small>Source: 2022–2024 Half-year income statement</small>
+        </div>
+        <p class="tagline">
+          Steady growth with a clear step-up in H2 2024 – important for
+          setting realistic revenue scenarios for 2025.
+        </p>
+        <canvas id="halfYearTrend"></canvas>
+      </div>
+
+      <!-- Chart 2: Q1 2025 revenue by brand -->
+      <div class="card">
+        <div class="card-title-row">
+          <h3>2. Q1 2025 revenue by brand</h3>
+          <small>Group vs Moncler vs Stone Island</small>
+        </div>
+        <p class="tagline">
+          Confirms that the strategic growth question is overwhelmingly about
+          the Moncler brand: ~87% of Group revenue in Q1 2025.
+        </p>
+        <canvas id="brandQ1Bar"></canvas>
+      </div>
+
+      <!-- Chart 3: Regional split for Moncler Q1 2025 -->
+      <div class="card">
+        <div class="card-title-row">
+          <h3>3. Moncler Q1 revenue by geography</h3>
+          <small>Asia, EMEA, Americas – 2024 vs 2025</small>
+        </div>
+        <p class="tagline">
+          Asia is now just over half of Moncler revenue; EMEA is soft, and
+          Americas is small but stabilising.
+        </p>
+        <div class="filter-row">
+          <label for="regionFilter">Highlight region:</label>
+          <select id="regionFilter">
+            <option value="ALL">All regions</option>
+            <option value="Asia">Asia</option>
+            <option value="EMEA">EMEA</option>
+            <option value="Americas">Americas</option>
+          </select>
+        </div>
+        <p id="regionInsight" class="tagline">
+          Select a region to highlight its year-on-year growth and contribution.
+        </p>
+        <canvas id="monclerGeoBar"></canvas>
+      </div>
+
+      <!-- Chart 4: Channel mix donut -->
+      <div class="card">
+        <div class="card-title-row">
+          <h3>4. Q1 2025 Moncler revenue by channel</h3>
+          <small>DTC vs Wholesale – with DTC split into boutiques vs online</small>
+        </div>
+        <p class="tagline">
+          DTC now contributes ~87% of Moncler Q1 sales, with wholesale being
+          deliberately reduced to protect brand equity.
+        </p>
+        <canvas id="channelDonut"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECONDARY VISUALS: store network + funnel -->
+  <section class="section">
+    <div class="grid grid-2">
+      <!-- Chart 5: Store network -->
+      <div class="card">
+        <div class="card-title-row">
+          <h3>5. Mono-brand store network (Mar-25)</h3>
+          <small>Number of stores by region and brand</small>
+        </div>
+        <p class="tagline">
+          Store network data supports a strategy of Asia-led DTC growth while
+          keeping wholesale tightly controlled.
+        </p>
+        <canvas id="storeNetworkBar"></canvas>
+      </div>
+
+      <!-- Chart 6: Scenario funnel (prescriptive) -->
+      <div class="card">
+        <div class="card-title-row">
+          <h3>6. DTC digital funnel – scenario</h3>
+          <small>Illustrative visits → views → carts → purchases</small>
+        </div>
+        <p class="tagline">
+          This funnel uses Moncler’s DTC revenue as a base and applies typical
+          luxury conversion rates to model the upside from improving each step.
+        </p>
+        <canvas id="funnelChart"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- Story & methodology -->
+  <section class="section card">
+    <div class="card-title-row">
+      <h2>The story behind the data</h2>
+      <small>Why this analysis matters (Option C)</small>
+    </div>
+    <p>
+      The analysis shows that Moncler has kept revenue broadly stable while
+      deliberately reshaping its growth model:
+    </p>
+    <ul>
+      <li>
+        <strong>Descriptive:</strong> Half-year trends highlight a strong H2
+        2024, showing that demand is resilient when product and execution
+        align.
+      </li>
+      <li>
+        <strong>Diagnostic:</strong> Regional and channel splits show that
+        <em>Asia + DTC</em> are the core growth engine, while wholesale and
+        EMEA act as drag on YoY growth.
+      </li>
+      <li>
+        <strong>Predictive:</strong> A simple linear regression on half-year
+        revenues (documented in the Python notebook) suggests modest
+        mid-single-digit growth if current trends continue.
+      </li>
+      <li>
+        <strong>Prescriptive:</strong> Scenario analysis around the digital
+        funnel and DTC share indicates that even small increases in conversion
+        or DTC mix generate meaningful incremental EBIT, without aggressive
+        store expansion.
+      </li>
+    </ul>
+    <p>
+      <strong>Recommended actions:</strong> (i) Continue to grow DTC in Asia
+      and high-productivity tourist locations; (ii) selectively reduce
+      wholesale exposure in under-performing EMEA doors; (iii) invest in
+      digital product discovery and conversion, as illustrated by the funnel
+      scenario; and (iv) use the store network as a brand accelerator rather
+      than a pure volume lever.
+    </p>
+  </section>
+
+  <!-- Limitations, risks & next steps -->
+  <section class="section card">
+    <div class="card-title-row">
+      <h2>Limitations, risks & next steps</h2>
+      <small>Interpreting the financial performance lens</small>
+    </div>
+    <h3>Key limitations</h3>
+    <ul>
+      <li>
+        The analysis relies on a relatively short history (H1 2022–H1 2024 and
+        Q1/9M 2025), which makes any forecast indicative rather than a
+        long-term trend.
+      </li>
+      <li>
+        Revenue is available by brand, region and channel, but detailed gross
+        margin and operating profit by segment are not disclosed, so profitability
+        is inferred using mix rather than explicit P&amp;L data.
+      </li>
+      <li>
+        The DTC split between boutiques and online, and the digital funnel
+        conversion rates, are based on documented industry ranges and stated as
+        assumptions rather than official Moncler guidance.
+      </li>
+    </ul>
+
+    <h3>Risks & watchpoints</h3>
+    <ul>
+      <li>
+        Over-reliance on Asian demand, particularly China and tourist flows, could
+        create downside risk if macro conditions weaken or travel normalises.
+      </li>
+      <li>
+        Ongoing wholesale “clean-up” supports brand equity but temporarily weighs
+        on reported growth, especially in EMEA.
+      </li>
+      <li>
+        DTC and digital investments require disciplined cost control; otherwise
+        margin expansion may lag revenue growth.
+      </li>
+    </ul>
+
+    <h3>Next analytical steps</h3>
+    <ul>
+      <li>
+        Extend the dataset once FY 2025 and FY 2026 results are published and
+        re-estimate the trend model.
+      </li>
+      <li>
+        Incorporate gross margin by channel/region if available, to move from
+        revenue focus to a more complete profitability picture.
+      </li>
+      <li>
+        Benchmark Moncler against key peers (e.g. Canada Goose, larger luxury
+        groups) on DTC share, store productivity and digital penetration.
+      </li>
+    </ul>
+  </section>
+
+  <!-- Technical documentation & AI reflection -->
+  <section class="section card">
+    <div class="card-title-row">
+      <h2>Technical documentation & use of AI</h2>
+      <small>Data, tools, and workflow</small>
+    </div>
+    <h3>Data sources & governance</h3>
+    <ul>
+      <li>
+        <strong>Company filings:</strong> Moncler Group Q1 2025 Interim
+        Management Statement, Half-year Financial Report 2022–2024, and 9M
+        2025 Interim Management Statement.
+      </li>
+      <li>
+        Numerical tables were manually transcribed into Excel and exported as
+        CSV files:
+        <code>2.1_brand_revenues.csv</code>,
+        <code>2.2_revenue_by_geography.csv</code>,
+        <code>2.3_revenue_by_channel.csv</code>,
+        <code>2.4_store_network.csv</code>,
+        <code>2.5_halfyear_revenues_2022_2024.csv</code>.
+      </li>
+      <li>
+        No personal data is used; therefore GDPR concerns are minimal. All
+        figures are public, attributed, and traceable back to Moncler’s
+        investor documents.
+      </li>
+    </ul>
+
+    <h3>Tools & analytical approach</h3>
+    <ul>
+      <li>
+        <strong>Python:</strong> <code>pandas</code> for data cleaning and
+        aggregation, <code>matplotlib</code> for exploratory charts, and
+        <code>scikit-learn</code> for a simple linear regression on half-year
+        revenues (2022–2024) to generate an indicative 2025 forecast.
+      </li>
+      <li>
+        <strong>Visualisation:</strong> Chart.js is used here in the final BI
+        artefact. All values in the charts below are embedded directly in the
+        script as the final, cleaned outputs of the Python notebook.
+      </li>
+      <li>
+        The notebook is structured into descriptive, diagnostic, predictive,
+        and prescriptive blocks, each commented so that the analysis is
+        reproducible.
+      </li>
+    </ul>
+
+    <h3>Reflection on using AI (200–300 words)</h3>
+    <p>
+      I used AI (ChatGPT) as a coding assistant and as a sounding board for
+      the overall analytical design. In the early stages it helped me turn my
+      business question into a concrete data plan: which Moncler tables I
+      needed to extract, how to normalise them into
+      <code>brand</code>, <code>region</code>, <code>channel</code> and
+      <code>period</code> fields, and how to structure the notebook into
+      descriptive, diagnostic, predictive, and prescriptive sections. AI was
+      also useful for writing boilerplate Python code (for example,
+      <code>groupby</code> operations or Chart.js configuration) and for
+      troubleshooting errors such as mismatched column names.
+    </p>
+    <p>
+      However, AI could not replace my own understanding of the Moncler
+      business model or the assignment rubric. I still had to read the
+      investor presentations carefully, decide which revenue splits were
+      strategically meaningful, and judge when results were statistically weak
+      because of small sample sizes. I also had to make the final decisions on
+      scenario design, such as how to turn DTC revenue into a digital funnel,
+      and how to interpret the forecasts responsibly. Overall, AI accelerated
+      the technical implementation, but the framing of the question, data
+      choices, and final recommendations were my own.
+    </p>
+  </section>
+
+  <footer>
+    Moncler Group BI Dashboard · Habib Goloba · National College of Ireland –
+    Business Intelligence
+  </footer>
+</main>
+
+<script>
+  // ---------------------------------------------------------------------------
+  // Embedded data – extracted from Moncler filings and CSVs used in Python
+  // ---------------------------------------------------------------------------
+
+  // 1) Half-year revenues 2022–2024 (EUR m)
+  const halfYearLabels = [
+    "2022 H1",
+    "2022 H2",
+    "2023 H1",
+    "2023 H2",
+    "2024 H1",
+    "2024 H2"
+  ];
+  const halfYearRevenue = [918.4, 1684.5, 1136.6, 1847.6, 1230.2, 1878.8];
+
+  // 2) Q1 2025 revenues by brand (EUR m)
+  const brandLabels = ["Group total", "Moncler", "Stone Island"];
+  const brandQ12024 = [818.0, 705.0, 113.0];
+  const brandQ12025 = [829.0, 721.8, 107.3];
+
+  // 3) Moncler Q1 2024/2025 by geography (EUR m)
+  const geoRegions = ["Asia", "EMEA", "Americas"];
+  const monclerGeo2024 = [362.6, 245.9, 96.4];
+  const monclerGeo2025 = [380.8, 244.3, 96.7];
+
+  // Region stats for filter
+  const regionStats = {
+    Asia: { rev2024: monclerGeo2024[0], rev2025: monclerGeo2025[0] },
+    EMEA: { rev2024: monclerGeo2024[1], rev2025: monclerGeo2025[1] },
+    Americas: { rev2024: monclerGeo2024[2], rev2025: monclerGeo2025[2] }
+  };
+
+  // 4) Moncler Q1 2025 channel mix (EUR m)
+  const dtcTotal = 630.5;
+  const wholesaleTotal = 91.3;
+  // Split DTC into boutiques vs online (70/30 assumption – documented as such)
+  const dtcBoutiques = dtcTotal * 0.7;
+  const dtcOnline = dtcTotal * 0.3;
+
+  // 5) Store network (31.03.2025) – number of mono-brand stores
+  const storeRegions = ["Asia", "EMEA", "Americas"];
+  const monclerStores = [145, 98, 51];
+  const stoneIslandStores = [54, 31, 7];
+
+  // 6) Funnel scenario – visits → product views → carts → purchases
+  const funnelStages = ["Visits", "Product views", "Carts", "Purchases"];
+  const funnelValues = [800000, 320000, 96000, 31000];
+
+  // ---------------------------------------------------------------------------
+  // Chart helpers
+  // ---------------------------------------------------------------------------
+  const baseFont = {
+    family:
+      'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+  };
+
+  function basicOptions(title) {
+    return {
+      responsive: true,
+      plugins: {
+        legend: { labels: { color: "#f5f5f7", font: { size: 11, ...baseFont } } },
+        title: {
+          display: false,
+          text: title,
+          color: "#f5f5f7",
+          font: { size: 13, weight: "600", ...baseFont }
+        },
+        tooltip: {
+          backgroundColor: "#11131b",
+          titleFont: { size: 11, ...baseFont },
+          bodyFont: { size: 11, ...baseFont },
+          borderColor: "#2b3044",
+          borderWidth: 1
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: "#9ea3b4", font: { size: 10, ...baseFont } },
+          grid: { color: "rgba(255,255,255,0.03)" }
+        },
+        y: {
+          ticks: { color: "#9ea3b4", font: { size: 10, ...baseFont } },
+          grid: { color: "rgba(255,255,255,0.05)" }
+        }
+      }
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Chart 1: Half-year revenue trend
+  // ---------------------------------------------------------------------------
+  new Chart(document.getElementById("halfYearTrend"), {
+    type: "line",
+    data: {
+      labels: halfYearLabels,
+      datasets: [
+        {
+          label: "Revenue (EUR m)",
+          data: halfYearRevenue,
+          borderColor: "#b38f5a",
+          backgroundColor: "rgba(179,143,90,0.22)",
+          borderWidth: 2,
+          tension: 0.25,
+          pointRadius: 3,
+          pointBackgroundColor: "#f5f5f7"
+        }
+      ]
+    },
+    options: {
+      ...basicOptions(),
+      scales: {
+        x: basicOptions().scales.x,
+        y: {
+          ...basicOptions().scales.y,
+          beginAtZero: false
+        }
+      }
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // Chart 2: Q1 2024 vs 2025 by brand
+  // ---------------------------------------------------------------------------
+  new Chart(document.getElementById("brandQ1Bar"), {
+    type: "bar",
+    data: {
+      labels: brandLabels,
+      datasets: [
+        {
+          label: "Q1 2024",
+          data: brandQ12024,
+          backgroundColor: "rgba(158,163,180,0.6)"
+        },
+        {
+          label: "Q1 2025",
+          data: brandQ12025,
+          backgroundColor: "rgba(179,143,90,0.8)"
+        }
+      ]
+    },
+    options: {
+      ...basicOptions(),
+      scales: basicOptions().scales
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // Chart 3: Moncler geography bar (2024 vs 2025) with region filter
+  // ---------------------------------------------------------------------------
+  const geoBaseColors2024 = [
+    "rgba(158,163,180,0.65)",
+    "rgba(158,163,180,0.65)",
+    "rgba(158,163,180,0.65)"
+  ];
+  const geoBaseColors2025 = [
+    "rgba(56,128,255,0.7)",
+    "rgba(56,128,255,0.7)",
+    "rgba(56,128,255,0.7)"
+  ];
+
+  const monclerGeoChart = new Chart(document.getElementById("monclerGeoBar"), {
+    type: "bar",
+    data: {
+      labels: geoRegions,
+      datasets: [
+        {
+          label: "Q1 2024",
+          data: monclerGeo2024,
+          backgroundColor: geoBaseColors2024.slice()
+        },
+        {
+          label: "Q1 2025",
+          data: monclerGeo2025,
+          backgroundColor: geoBaseColors2025.slice()
+        }
+      ]
+    },
+    options: {
+      ...basicOptions(),
+      scales: basicOptions().scales
+    }
+  });
+
+  const regionFilterEl = document.getElementById("regionFilter");
+  const regionInsightEl = document.getElementById("regionInsight");
+
+  function updateRegionHighlight(region) {
+    const muted2024 = "rgba(158,163,180,0.25)";
+    const muted2025 = "rgba(56,128,255,0.25)";
+
+    if (region === "ALL") {
+      monclerGeoChart.data.datasets[0].backgroundColor = geoBaseColors2024.slice();
+      monclerGeoChart.data.datasets[1].backgroundColor = geoBaseColors2025.slice();
+      regionInsightEl.textContent =
+        "Select a region to highlight its year-on-year growth and contribution.";
+    } else {
+      const idx = geoRegions.indexOf(region);
+      monclerGeoChart.data.datasets[0].backgroundColor = geoRegions.map((r, i) =>
+        i === idx ? geoBaseColors2024[i] : muted2024
+      );
+      monclerGeoChart.data.datasets[1].backgroundColor = geoRegions.map((r, i) =>
+        i === idx ? geoBaseColors2025[i] : muted2025
+      );
+
+      const s = regionStats[region];
+      const yoy = ((s.rev2025 - s.rev2024) / s.rev2024) * 100;
+      const yoyText = (yoy >= 0 ? "+" : "") + yoy.toFixed(1) + "%";
+      regionInsightEl.textContent =
+        region +
+        ": €" +
+        s.rev2025.toFixed(1) +
+        "m in Q1 2025 (" +
+        yoyText +
+        " vs Q1 2024 at constant FX).";
+    }
+
+    monclerGeoChart.update();
+  }
+
+  regionFilterEl.addEventListener("change", (e) =>
+    updateRegionHighlight(e.target.value)
+  );
+  updateRegionHighlight("ALL");
+
+  // ---------------------------------------------------------------------------
+  // Chart 4: Channel mix donut
+  // ---------------------------------------------------------------------------
+  new Chart(document.getElementById("channelDonut"), {
+    type: "doughnut",
+    data: {
+      labels: ["DTC – boutiques", "DTC – online", "Wholesale"],
+      datasets: [
+        {
+          data: [dtcBoutiques, dtcOnline, wholesaleTotal],
+          backgroundColor: [
+            "rgba(179,143,90,0.95)",
+            "rgba(98,163,255,0.95)",
+            "rgba(230,91,91,0.9)"
+          ],
+          borderWidth: 0
+        }
+      ]
+    },
+    options: {
+      cutout: "55%",
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: { color: "#f5f5f7", font: { size: 10, ...baseFont } }
+        },
+        tooltip: basicOptions().plugins.tooltip
+      }
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // Chart 5: Store network by region & brand
+  // ---------------------------------------------------------------------------
+  new Chart(document.getElementById("storeNetworkBar"), {
+    type: "bar",
+    data: {
+      labels: storeRegions,
+      datasets: [
+        {
+          label: "Moncler",
+          data: monclerStores,
+          backgroundColor: "rgba(179,143,90,0.85)"
+        },
+        {
+          label: "Stone Island",
+          data: stoneIslandStores,
+          backgroundColor: "rgba(88,171,116,0.85)"
+        }
+      ]
+    },
+    options: {
+      ...basicOptions(),
+      scales: basicOptions().scales
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // Chart 6: Funnel scenario
+  // ---------------------------------------------------------------------------
+  new Chart(document.getElementById("funnelChart"), {
+    type: "bar",
+    data: {
+      labels: funnelStages,
+      datasets: [
+        {
+          label: "Users",
+          data: funnelValues,
+          backgroundColor: "rgba(98,163,255,0.85)"
+        }
+      ]
+    },
+    options: {
+      ...basicOptions(),
+      scales: {
+        x: basicOptions().scales.x,
+        y: {
+          ...basicOptions().scales.y,
+          beginAtZero: true
+        }
+      },
+      plugins: {
+        ...basicOptions().plugins,
+        tooltip: {
+          ...basicOptions().plugins.tooltip,
+          callbacks: {
+            label: (ctx) =>
+              ctx.parsed.y.toLocaleString("en-IE") + " users (stage volume)"
+          }
+        }
+      }
+    }
+  });
+</script>
+</body>
+</html>
